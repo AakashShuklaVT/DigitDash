@@ -1,7 +1,7 @@
 import * as THREE from 'three'
-import Experience from './Experience.js'
 import gsap from 'gsap'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
+import Experience from './Experience.js'
 
 export default class Camera {
     constructor() {
@@ -10,25 +10,30 @@ export default class Camera {
         this.scene = this.experience.scene
         this.canvas = this.experience.canvas
 
+        this.frustumSize = 12
+
+        // Relative offset from player (fixed)
+        this.offset = new THREE.Vector3(0, 5, 0)
+
         this.setInstance()
         // this.setControls()
-
-        // store the initial offset relative to player (initially assumed player at 0,0,0)
-        this.offset = new THREE.Vector3(
-            this.instance.position.x,
-            this.instance.position.y,
-            this.instance.position.z
-        )
     }
 
     setInstance() {
-        this.instance = new THREE.PerspectiveCamera(
-            60,
-            this.sizes.width / this.sizes.height,
-            0.1,
-            100
+        const aspect = this.sizes.width / this.sizes.height
+
+        this.instance = new THREE.OrthographicCamera(
+            (-this.frustumSize * aspect) / 2, // left
+            (this.frustumSize * aspect) / 2,  // right
+            this.frustumSize / 2,             // top
+            -this.frustumSize / 2,            // bottom
+            0.1,                              // near
+            100                               // far
         )
-        this.instance.position.set(0, 0.9, 6) // initial camera position
+
+        // Start at offset position relative to origin
+        this.instance.position.copy(this.offset)
+        // this.instance.lookAt(0, 0, 0)
         this.scene.add(this.instance)
     }
 
@@ -38,32 +43,39 @@ export default class Camera {
     }
 
     resize() {
-        this.instance.aspect = this.sizes.width / this.sizes.height
+        const aspect = this.sizes.width / this.sizes.height
+        this.instance.left = (-this.frustumSize * aspect) / 2
+        this.instance.right = (this.frustumSize * aspect) / 2
+        this.instance.top = this.frustumSize / 2
+        this.instance.bottom = -this.frustumSize / 2
         this.instance.updateProjectionMatrix()
     }
 
     /**
-     * Smoothly follows the player while maintaining the initial offset
-     * @param {THREE.Vector3} playerPosition - current player position
+     * Smoothly follow the player while keeping a fixed offset
+     * @param {THREE.Vector3} playerPosition
      */
     followPlayer(playerPosition) {
         if (!playerPosition) return
 
+        // Compute target position: player + fixed offset
         const target = new THREE.Vector3().addVectors(playerPosition, this.offset)
 
+        // Smoothly move camera to target
         gsap.to(this.instance.position, {
             // x: target.x,
             y: target.y,
             z: target.z,
-            duration: 0,
+            duration: 0.05, // fast but smooth
             ease: 'power2.out'
         })
 
-        // optional: always look at player
-        this.instance.lookAt(this.instance.position.x, playerPosition.y, playerPosition.z - 1.5)
+        // Always look at player
+        this.instance.lookAt(this.instance.position.x, playerPosition.y, playerPosition.z)
     }
 
     update() {
-        // this.controls.update()
+        // Optional: update controls if using OrbitControls
+        if (this.controls) this.controls.update()
     }
 }

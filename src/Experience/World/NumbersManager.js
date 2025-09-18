@@ -1,6 +1,7 @@
 import * as THREE from "three"
 import Experience from "../Experience.js"
 import TextHandler from "../Utils/TextHandler.js"
+import gameConfig from "../configs/gameConfig.js"
 
 export default class NumbersManager {
     constructor(player) {
@@ -13,10 +14,10 @@ export default class NumbersManager {
         this.debug = this.experience.debug
 
         // Config
-        this.laneCount = 3
-        this.laneWidth = 2
-        this.gap = 45      
-        this.initialCount = 5    
+        this.laneCount = gameConfig.laneCount
+        this.laneWidth = gameConfig.laneWidth
+        this.gap = gameConfig.numberManager.gap
+        this.initialCount = gameConfig.numberManager.initialCount
 
         this.groups = []
         this.lastSpawnZ = 0
@@ -60,7 +61,6 @@ export default class NumbersManager {
         return values
     }
 
-    /** Create a cube with text and optional debug helper */
     createNumberCube(value, x, y, z) {
         const cubeGeo = new THREE.BoxGeometry(0.9, 0.9, 0.9)
         const cubeMat = new THREE.MeshStandardMaterial({ color: 0xffffff })
@@ -70,9 +70,10 @@ export default class NumbersManager {
         // Attach text
         const textMesh = this.textHandler.createText({
             text: value.toString(),
-            fontSize: 0.6,
+            fontSize: 0.5,
             color: 0xffffff,
-            position: { x: 0, y: 0.05, z: 0.55 },
+            position: { x: 0, y: 1, z: 0 },
+            rotation: {x: -90, y: 0, z: 0}
         })
         cube.add(textMesh)
 
@@ -85,7 +86,6 @@ export default class NumbersManager {
         return { mesh: cube, value, helper }
     }
 
-    /** Spawn a group of numbers at given Z */
     spawnGroup(zPos) {
         const y = 0.5
         const half = Math.floor(this.laneCount / 2)
@@ -110,22 +110,18 @@ export default class NumbersManager {
         this.lastSpawnZ = zPos
     }
 
-    /** Handle player-number collision */
-    /** Handle player-number collision */
+
     handleCollision(grp, num, j) {
-        // If this group already had a collision, skip
         if (grp.consumed) return
 
-        grp.consumed = true // mark group as consumed
+        grp.consumed = true 
 
         this.eventEmitter.trigger("numberCollision", [num.value])
 
-        // Remove only the collided cube
         grp.group.remove(num.mesh)
         if (num.helper) grp.group.remove(num.helper)
         grp.numbers.splice(j, 1)
 
-        // Spawn new group after first collision
         this.spawnGroup(this.lastSpawnZ - this.gap)
     }
 

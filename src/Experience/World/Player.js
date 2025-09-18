@@ -2,6 +2,7 @@ import * as THREE from 'three'
 import gsap from 'gsap'
 import Experience from '../Experience.js'
 import TextHandler from '../Utils/TextHandler.js'
+import gameConfig from '../configs/gameConfig.js'
 
 export default class Player {
     constructor() {
@@ -12,16 +13,16 @@ export default class Player {
         this.textHandler = new TextHandler(this.scene)
 
         // Config
-        this.laneIndex = 1
-        this.laneCount = 3
-        this.laneWidth = 2
-        this.baseSpeed = 0.09// starting speed
-        this.speed = this.baseSpeed
-        this.maxSpeed = 0.4  // maximum speed
-        this.acceleration = 0.00009 // speed increase per frame (adjustable)
+        this.laneIndex = gameConfig.player.laneIndex
+        this.laneCount = gameConfig.laneCount
+        this.laneWidth = gameConfig.laneWidth
+        this.baseSpeed = gameConfig.player.baseSpeed
+        this.speed = gameConfig.player.speed
+        this.maxSpeed = gameConfig.player.maxSpeed
+        this.acceleration = gameConfig.player.acceleration
         this.isDead = false
-        // Score / counter value
-        this.counterValue = 2
+
+        this.counterValue = gameConfig.player.counterValue
 
         this.setPlayer()
         this.registerEvents()
@@ -38,7 +39,7 @@ export default class Player {
         const half = Math.floor(this.laneCount / 2)
         this.mesh.position.x = (this.laneIndex - half) * this.laneWidth
         this.mesh.position.y = 0.45
-        this.mesh.position.z = -4
+        this.mesh.position.z = -10
 
         this.scene.add(this.mesh)
     }
@@ -53,12 +54,17 @@ export default class Player {
     createPlayerCounterText() {
         this.counterText = this.textHandler.createText({
             text: this.counterValue.toString(),
-            fontSize: 0.2,
+            fontSize: 0.3,
             color: 0xffffff,
             position: {
                 x: this.mesh.position.x,
-                y: this.mesh.position.y + 0.04,
-                z: this.mesh.position.z + 0.4
+                y: this.mesh.position.y + 1,
+                z: this.mesh.position.z
+            },
+            rotation: {
+                x: -90,
+                y: 0,
+                z: 0
             },
             outlineWidth: 0.01
         })
@@ -68,7 +74,7 @@ export default class Player {
     updatePlayerCounterText(number) {
         this.counterValue += number
 
-        
+
         this.counterText.text = this.counterValue.toString()
         this.counterText.sync()
 
@@ -113,7 +119,6 @@ export default class Player {
         this.eventEmitter.off('left', this.moveLeft)
         this.eventEmitter.off('right', this.moveRight)
         this.eventEmitter.off('numberCollision', this.updatePlayerCounterText)
-        // this.eventEmitter.off('gameOver', this.gameOver)
     }
 
     update() {
@@ -123,19 +128,19 @@ export default class Player {
             this.speed += this.acceleration
             if (this.speed > this.maxSpeed) this.speed = this.maxSpeed
         }
+        console.log(this.speed);
 
         // Move forward
         this.mesh.position.z -= this.speed
 
-        // Make camera follow
         this.camera.followPlayer(this.mesh.position)
 
         // Keep text floating above player
         if (this.counterText) {
             this.counterText.position.set(
                 this.mesh.position.x,
-                this.mesh.position.y + 0.04,
-                this.mesh.position.z + 0.4,
+                this.mesh.position.y + 0.5,
+                this.mesh.position.z,
             )
         }
     }

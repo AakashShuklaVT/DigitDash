@@ -1,34 +1,27 @@
 import * as THREE from "three"
 import Experience from "../Experience.js"
+import gameConfig from "../configs/gameConfig.js"
 
 export default class Path {
     /**
      * @param {Object} player - player object with either .position.z or .mesh.position.z
-     * @param {Object} opts - optional configuration
      */
-    constructor(player, {
-        segmentLength = 200,
-        visibleSegments = 3,
-        laneCount = 3,
-        laneWidth = 2,
-        recycleMargin = 10,
-        overlap = 0.05,
-        debug = false,
-        useBasicMaterialForDebug = true
-    } = {}) {
+    constructor(player) {
         this.experience = new Experience()
         this.scene = this.experience.scene
         this.player = player
 
-        // Config
-        this.segmentLength = segmentLength
-        this.visibleSegments = Math.max(2, visibleSegments)
-        this.laneCount = laneCount
-        this.laneWidth = laneWidth
-        this.recycleMargin = recycleMargin
-        this.overlap = overlap
-        this.debug = debug
-        this.useBasicMaterialForDebug = useBasicMaterialForDebug
+        // Config - merge default config with any provided options
+        const pathConfig = gameConfig.path;
+
+        this.segmentLength = pathConfig.segmentLength;
+        this.visibleSegments = Math.max(2, pathConfig.visibleSegments);
+        this.laneCount = gameConfig.laneCount;
+        this.laneWidth = gameConfig.laneWidth;
+        this.recycleMargin = pathConfig.recycleMargin;
+        this.overlap = pathConfig.overlap;
+        this.debug = pathConfig.debug;
+        this.useBasicMaterialForDebug = pathConfig.useBasicMaterialForDebug;
 
         this.segments = []
         this.startPlayerZ = this._getPlayerZ()
@@ -44,7 +37,6 @@ export default class Path {
             this.spawnSegment(z)
         }
         this.updateSegmentRefs()
-        // this._log("Initial segments (z):", this.segments.map(s => s.position.z))
     }
 
     /** Create one ground segment */
@@ -57,8 +49,8 @@ export default class Path {
         geometry.translate(0, 0, -this.segmentLength / 2)
 
         const material = (this.debug && this.useBasicMaterialForDebug)
-            ? new THREE.MeshBasicMaterial({ color: 0x888888 })
-            : new THREE.MeshStandardMaterial({ color: 0xffffff })
+            ? new THREE.MeshBasicMaterial({ color: 'pink'})
+            : new THREE.MeshStandardMaterial({ color: 'pink'})
 
         const seg = new THREE.Mesh(geometry, material)
         seg.receiveShadow = true
@@ -83,7 +75,6 @@ export default class Path {
         this.segments.unshift(seg)
 
         this.updateSegmentRefs()
-        // this._log("Moved segment. Order (z):", this.segments.map(s => s.position.z))
     }
 
     /** Compute lane X positions */
