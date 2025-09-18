@@ -17,7 +17,7 @@ export default class Player {
         this.laneWidth = 2
         this.baseSpeed = 0.09// starting speed
         this.speed = this.baseSpeed
-        this.maxSpeed = 0.5  // maximum speed
+        this.maxSpeed = 0.4  // maximum speed
         this.acceleration = 0.00009 // speed increase per frame (adjustable)
         this.isDead = false
         // Score / counter value
